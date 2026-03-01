@@ -5,6 +5,14 @@ terraform {
       version = "~> 5.0"
     }
   }
+  backend "s3" {
+    bucket         = "yohei-tfstate-20260301-abc123"
+    key            = "aws_s3/terraform.tfstate"
+    region         = "ap-northeast-1"
+    dynamodb_table = "terraform-locks"
+    encrypt        = true
+  }
+
 }
 
 provider "aws" {
