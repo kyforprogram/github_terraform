@@ -1,4 +1,5 @@
 terraform {
+  required_version = ">= 1.3"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -8,12 +9,12 @@ terraform {
 }
 
 provider "aws" {
-  region = "ap-northeast-1"
+  region = "us-east-1"
 }
 
 # backend用 S3（state置き場）
 resource "aws_s3_bucket" "tfstate" {
-  bucket        = "yohei-tfstate-20260301-abc123"
+  bucket        = "yohei-tfstate-20260307-abc123"
   force_destroy = true
   tags = {
     Name = "terraform-state"
@@ -43,7 +44,7 @@ resource "aws_s3_bucket_public_access_block" "tfstate" {
 resource "aws_s3_bucket_versioning" "tfstate" {
   bucket = aws_s3_bucket.tfstate.id
   versioning_configuration {
-    status = "Enabled"
+    status = "Suspended"
   }
 }
 
@@ -57,19 +58,33 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "tfstate" {
   }
 }
 
-# ロック用 DynamoDB
-resource "aws_dynamodb_table" "locks" {
-  name         = "terraform-locks"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "LockID"
+# # ロック用 DynamoDB
+# resource "aws_dynamodb_table" "locks" {
+#   name         = "terraform-locks"
+#   billing_mode = "PAY_PER_REQUEST"
+#   hash_key     = "LockID"
 
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
+#   attribute {
+#     name = "LockID"
+#     type = "S"
+#   }
 
-  tags = {
-    Name = "terraform-locks"
-    Env  = "bootstrap"
+#   tags = {
+#     Name = "terraform-locks"
+#     Env  = "bootstrap"
+#   }
+# }
+
+# バケットのライフサイクル設定
+resource "aws_s3_bucket_lifecycle_configuration" "tfstate_lifecycle" {
+  bucket = aws_s3_bucket.tfstate.id
+
+  rule {
+    id     = "cleanup-old-versions"
+    status = "Enabled"
+
+    noncurrent_version_expiration {
+      noncurrent_days = 1
+    }
   }
 }
