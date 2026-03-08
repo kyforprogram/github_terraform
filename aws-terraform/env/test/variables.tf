@@ -1,9 +1,9 @@
 variable "project_name" {
-  type = string
+  type    = string
   default = "terraform-test"
 }
 
 variable "enviroment_name" {
-    type = string
+  type    = string
   default = "test"
 }
