@@ -14,7 +14,7 @@ provider "aws" {
 
 # backend用 S3（state置き場）
 resource "aws_s3_bucket" "tfstate" {
-  bucket        = "yohei-tfstate-20260307-abc123"
+  bucket        = "terraform-tfstate-20260307-abc123"
   force_destroy = true
   tags = {
     Name = "terraform-state"
