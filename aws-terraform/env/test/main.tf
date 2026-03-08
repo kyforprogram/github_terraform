@@ -1,6 +1,7 @@
 locals {
   vpc_cidr = "10.0.0.0/16"
 
+  name = "${var.project_name}-${var.enviroment_name}"
   tags = {
     Managed     = "terraform"
     Environment = var.enviroment_name
@@ -12,9 +13,9 @@ locals {
 # VPC Module
 ################################################################################
 module "vpc" {
-  source = "../../module/vpc"
+  source = "../../modules/vpc"
 
-  name       = "${var.project_name}-vpc"
+  name       = local.name
   cidr_block = local.vpc_cidr
 
   tags = local.tags

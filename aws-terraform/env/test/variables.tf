@@ -5,5 +5,5 @@ variable "project_name" {
 
 variable "enviroment_name" {
   type    = string
-  default = "test"
+  default = "env-test"
 }
