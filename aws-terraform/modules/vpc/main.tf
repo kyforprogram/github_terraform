@@ -154,16 +154,43 @@ resource "aws_security_group" "alb" {
   )
 }
 
-resource "aws_security_group" "alb" {
-  name   = "${var.name}-sg-alb"
+resource "aws_security_group" "ecs" {
+  name   = "${var.name}-sg-ecs"
   vpc_id = aws_vpc.main.id
 
   ingress {
-    description = "HTTP from internet"
-    from_port   = 80
-    to_port     = 80
+    description     = "Allow ALB access"
+    from_port       = 3000
+    to_port         = 3000
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.name}-sg-ecs"
+    }
+  )
+}
+
+resource "aws_security_group" "rds" {
+  name   = "${var.name}-sg-rds"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    description = "RDS from ECS"
+    from_port   = 5432
+    to_port     = 5432
     protocol     = "tcp"
-    cidr_blocks  = [local.my_ip]
+    cidr_blocks  = [aws_security_group.ecs.id]
   }
 
   egress {
@@ -176,7 +203,8 @@ resource "aws_security_group" "alb" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.name}-sg-alb"
+      Name = "${var.name}-sg-rds"
     }
   )
 }
+
