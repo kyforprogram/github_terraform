@@ -1,3 +1,6 @@
+################################################################################
+# Module VPC
+################################################################################
 resource "aws_vpc" "main" {
   cidr_block           = var.cidr_block
   enable_dns_hostnames = true
@@ -21,7 +24,9 @@ resource "aws_internet_gateway" "main" {
     }
   )
 }
-
+################################################################################
+# Module サブネット
+################################################################################
 resource "aws_subnet" "main" {
   for_each = var.subnets
 
@@ -39,6 +44,9 @@ resource "aws_subnet" "main" {
   )
 }
 
+################################################################################
+# Module ルートテーブル
+################################################################################
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
@@ -75,6 +83,9 @@ resource "aws_route_table" "private_db" {
   )
 }
 
+################################################################################
+# Module ルートテーブル 関連付け
+################################################################################
 resource "aws_route_table_association" "public" {
   for_each = {
     for k, v in var.subnets : k =>v
@@ -104,3 +115,41 @@ resource "aws_route_table_association" "private_db" {
   subnet_id      = aws_subnet.main[each.key].id
   route_table_id = aws_route_table.private_db.id
 }
+
+################################################################################
+# Module セキュリティグループ
+################################################################################
+ data "http" "my_ip" {
+   url = "https://checkip.amazonaws.com"
+ }
+
+locals {
+  my_ip = "${chomp(date.http.my_ip.response_body)}/32"  
+}
+
+ resource "aws_security_group" "alb" {
+  name = "${var.name}-sg-alb"
+  vpc_id = aws_vpc.main.id
+
+  ingress = {
+      description = "HTTP from internet"
+      from_port = "80"
+      to_port = "80"
+      protcol = "tcp"
+      cidr_block = [local.my_ip]
+  }
+
+  egress = {
+    from_port = "0"
+    to_port = "0"
+    protcol = "-1"
+    cidr_block = ["0.0.0.0/0"]
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.name}-sg-alb"
+    }
+  )
+ }
