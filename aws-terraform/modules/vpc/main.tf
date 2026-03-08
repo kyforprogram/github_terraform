@@ -55,6 +55,26 @@ resource "aws_route_table" "public" {
   )
 }
 
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.name}-private-rt"
+    }
+  )
+}
+
+resource "aws_route_table" "private_db" {
+  vpc_id = aws_vpc.main.id
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.name}-private-db-rt"
+    }
+  )
+}
+
 resource "aws_route_table_association" "public" {
   for_each = {
     for k, v in var.subnets : k =>v
@@ -63,4 +83,24 @@ resource "aws_route_table_association" "public" {
 
   subnet_id      = aws_subnet.main[each.key].id
   route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "private" {
+  for_each = {
+    for k, v in var.subnets : k =>v
+    if v.type == "private"
+  }
+
+  subnet_id      = aws_subnet.main[each.key].id
+  route_table_id = aws_route_table.private.id
+}
+
+resource "aws_route_table_association" "private_db" {
+  for_each = {
+    for k, v in var.subnets : k =>v
+    if v.type == "private_db"
+  }
+
+  subnet_id      = aws_subnet.main[each.key].id
+  route_table_id = aws_route_table.private_db.id
 }
