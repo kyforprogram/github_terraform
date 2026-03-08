@@ -34,6 +34,33 @@ resource "aws_subnet" "main" {
     var.tags,
     {
       Name = "${var.name}-${each.key}"
+      Type = each.value.type
     }
   )
+}
+
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.main.id
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.name}-public-rt"
+    }
+  )
+}
+
+resource "aws_route_table_association" "public" {
+  for_each = {
+    for k, v in var.subnets : k =>v
+    if v.type == "public"
+  }
+
+  subnet_id      = aws_subnet.main[each.key].id
+  route_table_id = aws_route_table.public.id
 }
