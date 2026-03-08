@@ -9,3 +9,10 @@ variable "cidr_block" {
 variable "tags" {
   type = map(string)
 }
+variable "subnets" {
+  type = map(object({
+    type = string
+    az   = string
+    cidr = string
+  }))
+}
