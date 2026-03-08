@@ -88,7 +88,7 @@ resource "aws_route_table" "private_db" {
 ################################################################################
 resource "aws_route_table_association" "public" {
   for_each = {
-    for k, v in var.subnets : k =>v
+    for k, v in var.subnets : k => v
     if v.type == "public"
   }
 
@@ -98,7 +98,7 @@ resource "aws_route_table_association" "public" {
 
 resource "aws_route_table_association" "private" {
   for_each = {
-    for k, v in var.subnets : k =>v
+    for k, v in var.subnets : k => v
     if v.type == "private"
   }
 
@@ -108,7 +108,7 @@ resource "aws_route_table_association" "private" {
 
 resource "aws_route_table_association" "private_db" {
   for_each = {
-    for k, v in var.subnets : k =>v
+    for k, v in var.subnets : k => v
     if v.type == "private_db"
   }
 
@@ -119,30 +119,30 @@ resource "aws_route_table_association" "private_db" {
 ################################################################################
 # Module セキュリティグループ
 ################################################################################
- data "http" "my_ip" {
-   url = "https://checkip.amazonaws.com"
- }
-
-locals {
-  my_ip = "${chomp(date.http.my_ip.response_body)}/32"  
+data "http" "my_ip" {
+  url = "https://checkip.amazonaws.com"
 }
 
- resource "aws_security_group" "alb" {
-  name = "${var.name}-sg-alb"
+locals {
+  my_ip = "${chomp(date.http.my_ip.response_body)}/32"
+}
+
+resource "aws_security_group" "alb" {
+  name   = "${var.name}-sg-alb"
   vpc_id = aws_vpc.main.id
 
   ingress = {
-      description = "HTTP from internet"
-      from_port = "80"
-      to_port = "80"
-      protcol = "tcp"
-      cidr_block = [local.my_ip]
+    description = "HTTP from internet"
+    from_port   = "80"
+    to_port     = "80"
+    protcol     = "tcp"
+    cidr_block  = [local.my_ip]
   }
 
   egress = {
-    from_port = "0"
-    to_port = "0"
-    protcol = "-1"
+    from_port  = "0"
+    to_port    = "0"
+    protcol    = "-1"
     cidr_block = ["0.0.0.0/0"]
   }
 
@@ -152,4 +152,4 @@ locals {
       Name = "${var.name}-sg-alb"
     }
   )
- }
+}
