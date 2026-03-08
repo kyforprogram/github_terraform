@@ -124,26 +124,53 @@ data "http" "my_ip" {
 }
 
 locals {
-  my_ip = "${chomp(date.http.my_ip.response_body)}/32"
+  my_ip = "${chomp(data.http.my_ip.response_body)}/32"
 }
 
 resource "aws_security_group" "alb" {
   name   = "${var.name}-sg-alb"
   vpc_id = aws_vpc.main.id
 
-  ingress = {
+  ingress {
     description = "HTTP from internet"
-    from_port   = "80"
-    to_port     = "80"
-    protcol     = "tcp"
-    cidr_block  = [local.my_ip]
+    from_port   = 80
+    to_port     = 80
+    protocol     = "tcp"
+    cidr_blocks  = [local.my_ip]
   }
 
-  egress = {
-    from_port  = "0"
-    to_port    = "0"
-    protcol    = "-1"
-    cidr_block = ["0.0.0.0/0"]
+  egress {
+    from_port  = 0
+    to_port    = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.name}-sg-alb"
+    }
+  )
+}
+
+resource "aws_security_group" "alb" {
+  name   = "${var.name}-sg-alb"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    description = "HTTP from internet"
+    from_port   = 80
+    to_port     = 80
+    protocol     = "tcp"
+    cidr_blocks  = [local.my_ip]
+  }
+
+  egress {
+    from_port  = 0
+    to_port    = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = merge(
