@@ -319,6 +319,23 @@ resource "aws_lb" "main" {
   )
 }
 
+# resource "aws_lb_listener" "main" {
+#   port = 80
+#   protocol = "HTTP"
+  
+#   load_balancer_arn = aws_lb.main.arn
+
+#   default_action {
+#     type = "fixed-response"
+
+#     fixed_response {
+#       content_type = "text/plain"
+#       status_code = "200"
+#       message_body = "OK"
+#     }
+#   }
+# }
+
 resource "aws_lb_listener" "main" {
   port = 80
   protocol = "HTTP"
@@ -326,16 +343,11 @@ resource "aws_lb_listener" "main" {
   load_balancer_arn = aws_lb.main.arn
 
   default_action {
-    type = "fixed-response"
-
-    fixed_response {
-      content_type = "text/plain"
-      status_code = "200"
-      message_body = "OK"
-    }
+      type = "forward"
+      target_group_arn = aws_lb_target_group.main.arn
   }
+ }
 
-}
 resource "aws_lb_target_group" "main" {
   name     = "${var.name}-tg"
   port     = 80
@@ -372,3 +384,4 @@ resource "aws_lb_target_group_attachment" "main" {
   target_id        = aws_instance.apache_ec2[each.key].id
   port             = 80
 }
+
