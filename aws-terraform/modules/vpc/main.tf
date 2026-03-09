@@ -319,3 +319,56 @@ resource "aws_lb" "main" {
   )
 }
 
+resource "aws_lb_listener" "main" {
+  port = 80
+  protocol = "HTTP"
+  
+  load_balancer_arn = aws_lb.main.arn
+
+  default_action {
+    type = "fixed-response"
+
+    fixed_response {
+      content_type = "text/plain"
+      status_code = "200"
+      message_body = "OK"
+    }
+  }
+
+}
+resource "aws_lb_target_group" "main" {
+  name     = "${var.name}-tg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.main.id
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2
+    interval            = 30
+    matcher             = "200"
+    path                = "/"
+    port                = "traffic-port"
+    protocol            = "HTTP"
+    timeout             = 5
+    unhealthy_threshold = 2
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.name}-tg"
+    }
+  )
+}
+
+resource "aws_lb_target_group_attachment" "main" {
+  for_each = {
+    for k, v in var.subnets : k => v
+    if v.type == "private"
+  }
+
+  target_group_arn = aws_lb_target_group.main.arn
+  target_id        = aws_instance.apache_ec2[each.key].id
+  port             = 80
+}
