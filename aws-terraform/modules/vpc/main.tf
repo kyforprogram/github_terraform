@@ -203,21 +203,48 @@ resource "aws_security_group" "ec2" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.name}-sg-ecs"
+      Name = "${var.name}-sg-ec2"
     }
   )
 }
+
+# resource "aws_security_group" "rds" {
+#   name   = "${var.name}-sg-rds"
+#   vpc_id = aws_vpc.main.id
+
+#   ingress {
+#     description = "RDS from ECS"
+#     from_port   = 5432
+#     to_port     = 5432
+#     protocol     = "tcp"
+#     cidr_blocks  = [aws_security_group.ecs.id]
+#   }
+
+#   egress {
+#     from_port  = 0
+#     to_port    = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   tags = merge(
+#     var.tags,
+#     {
+#       Name = "${var.name}-sg-rds"
+#     }
+#   )
+# }
 
 resource "aws_security_group" "rds" {
   name   = "${var.name}-sg-rds"
   vpc_id = aws_vpc.main.id
 
   ingress {
-    description = "RDS from ECS"
+    description = "RDS from ec2"
     from_port   = 5432
     to_port     = 5432
     protocol     = "tcp"
-    cidr_blocks  = [aws_security_group.ecs.id]
+    security_groups  = [aws_security_group.ec2.id]
   }
 
   egress {
