@@ -154,14 +154,41 @@ resource "aws_security_group" "alb" {
   )
 }
 
-resource "aws_security_group" "ecs" {
-  name   = "${var.name}-sg-ecs"
+# resource "aws_security_group" "ecs" {
+#   name   = "${var.name}-sg-ecs"
+#   vpc_id = aws_vpc.main.id
+
+#   ingress {
+#     description     = "Allow ALB access"
+#     from_port       = 3000
+#     to_port         = 3000
+#     protocol        = "tcp"
+#     security_groups = [aws_security_group.alb.id]
+#   }
+
+#   egress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   tags = merge(
+#     var.tags,
+#     {
+#       Name = "${var.name}-sg-ecs"
+#     }
+#   )
+# }
+
+resource "aws_security_group" "ec2" {
+  name   = "${var.name}-sg-ec2"
   vpc_id = aws_vpc.main.id
 
   ingress {
     description     = "Allow ALB access"
-    from_port       = 3000
-    to_port         = 3000
+    from_port       = 80
+    to_port         = 80
     protocol        = "tcp"
     security_groups = [aws_security_group.alb.id]
   }
@@ -208,3 +235,39 @@ resource "aws_security_group" "rds" {
   )
 }
 
+################################################################################
+# Module インスタンス
+################################################################################
+data "aws_ami" "amazon_linux" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
+resource "aws_instance" "apache_ec2" {
+  for_each = {
+    for k, v in var.subnets : k => v
+    if v.type == "private"
+  }
+
+  instance_type          = "t2.micro"
+  ami                    = data.aws_ami.amazon_linux.id
+  subnet_id              = aws_subnet.main[each.key].id
+  vpc_security_group_ids = [aws_security_group.ec2.id]
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.name}-${each.key}-ec2"
+    }
+  )
+}
