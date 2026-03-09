@@ -135,13 +135,13 @@ resource "aws_security_group" "alb" {
     description = "HTTP from internet"
     from_port   = 80
     to_port     = 80
-    protocol     = "tcp"
-    cidr_blocks  = [local.my_ip]
+    protocol    = "tcp"
+    cidr_blocks = [local.my_ip]
   }
 
   egress {
-    from_port  = 0
-    to_port    = 0
+    from_port   = 0
+    to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -240,16 +240,16 @@ resource "aws_security_group" "rds" {
   vpc_id = aws_vpc.main.id
 
   ingress {
-    description = "RDS from ec2"
-    from_port   = 5432
-    to_port     = 5432
-    protocol     = "tcp"
-    security_groups  = [aws_security_group.ec2.id]
+    description     = "RDS from ec2"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ec2.id]
   }
 
   egress {
-    from_port  = 0
-    to_port    = 0
+    from_port   = 0
+    to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -298,3 +298,24 @@ resource "aws_instance" "apache_ec2" {
     }
   )
 }
+
+################################################################################
+# Module ALB
+################################################################################
+resource "aws_lb" "main" {
+  load_balancer_type = "application"
+  name               = "${var.name}-alb"
+  security_groups    = [aws_security_group.alb.id]
+  subnets = [
+    for k, v in var.subnets : aws_subnet.main[k].id
+    if v.type == "public"
+  ]
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.name}-alb"
+    }
+  )
+}
+
